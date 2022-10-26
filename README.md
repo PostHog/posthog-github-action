@@ -14,7 +14,7 @@ At PostHog we use it to track some development metrics
 
 **Required** Your PostHog API Host.
 
-Defaults to "https://api.posthog.com"
+Defaults to "https://app.posthog.com"
 
 ### `event`
 
