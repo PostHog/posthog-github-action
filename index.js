@@ -8,8 +8,6 @@ try {
     const eventName = core.getInput('event');
     const properties = JSON.parse(core.getInput('properties'));
 
-    properties["$lib"] = 'posthog-github-action'
-
     const githubContext = {
         sha: github.context.sha,
         ref: github.context.ref,
