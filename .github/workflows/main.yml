@@ -1,0 +1,12 @@
+on: [push]
+
+jobs:
+  test_job:
+    runs-on: ubuntu-latest
+    name: A job to test that this works
+    steps:
+      - name: Push an event to PostHog
+        uses: pauldambra/posthog-github-actions@0.0
+        with:
+          posthog-token: 'Mona the Octocat'
+          event: 'gh-actions-test-emitting-from-actions'

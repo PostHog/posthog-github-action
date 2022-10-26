@@ -1,0 +1,20 @@
+name: 'Send event to PostHog'
+description: 'sends an event to PostHog'
+inputs:
+    posthog-token:
+        description: 'Your PostHog API token - see project settings section "Project API Key"'
+        required: true
+    posthog-api-host:
+      description: 'Your PostHog API host'
+      required: true
+      default: 'https://api.posthog.com'
+    event:
+        description: 'the event name e.g. "GitHubActionCompleted"'
+        required: true
+        default: 'event-from-github-actions'
+    properties:
+        description: 'properties to add to the event'
+        required: false
+runs:
+    using: 'node16'
+    main: 'index.js'

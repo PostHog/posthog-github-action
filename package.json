@@ -1,0 +1,25 @@
+{
+  "name": "posthog-github-action",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pauldambra/posthog-github-action.git"
+  },
+  "keywords": [],
+  "author": "Paul D'Ambra",
+  "license": "CC-BY-SA-4.0",
+  "bugs": {
+    "url": "https://github.com/pauldambra/posthog-github-action/issues"
+  },
+  "homepage": "https://github.com/pauldambra/posthog-github-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "posthog-js": "^1.34.0"
+  }
+}
