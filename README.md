@@ -1,4 +1,4 @@
-# PostHog GitHub action
+# PostHog GitHub Action
 
 This action lets you send events to PostHog from your GitHub actions.
 
