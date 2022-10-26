@@ -1,4 +1,4 @@
-# PostHog GitHub action
+# PostHog GitHub Action
 
 This action lets you send events to PostHog from your GitHub actions.
 
@@ -24,13 +24,28 @@ Defaults to "event-from-github-actions"
 
 ### `properties`
 
-The properties to add to the event.
+The properties to add to the event. These should be passed as a string containing a JSON object.
+
+The action runs `JSON.parse(theProperties)`
 
 ## Example usage
+
+Your API token is write-only and public so safe to include here in plain-text
 
 ```yaml
 uses: actions/posthog-github-action
 with:
 posthog-token: 'abcdefgh'
 event: 'gh-actions-production-deploy-completed'
+properties: '{"an-example": "property"}'
+```
+
+but you can add it as a secret if you prefer not to expose any secrets in plain-text
+
+```yaml
+uses: actions/posthog-github-action
+with:
+posthog-token: ${{ secrets.API_TOKEN }} 
+event: 'gh-actions-production-deploy-completed'
+properties: '{"an-example": "property"}'
 ```

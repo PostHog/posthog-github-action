@@ -7,13 +7,13 @@ inputs:
     posthog-api-host:
       description: 'Your PostHog API host'
       required: true
-      default: 'https://api.posthog.com'
+      default: 'https://app.posthog.com'
     event:
         description: 'the event name e.g. "GitHubActionCompleted"'
         required: true
         default: 'event-from-github-actions'
     properties:
-        description: 'properties to add to the event'
+        description: 'properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`'
         required: false
 runs:
     using: 'node16'
