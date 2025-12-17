@@ -1,5 +1,9 @@
 name: "Send event to PostHog"
 description: "Sends an event to PostHog from GitHub Actions"
+author: "PostHog"
+branding:
+  icon: "activity"
+  color: "orange"
 inputs:
   posthog-token:
     description: 'Your PostHog API token - see project settings section "Project API Key"'
