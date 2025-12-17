@@ -1,6 +1,6 @@
 {
   "name": "posthog-github-action",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Send events to PostHog from GitHub Actions",
   "main": "index.js",
   "scripts": {
