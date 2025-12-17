@@ -120,6 +120,16 @@ npm install
 cp .secrets.example .secrets
 ```
 
+### Building
+
+This action uses [`@vercel/ncc`](https://github.com/vercel/ncc) to bundle all dependencies into a single file. **You must rebuild before committing changes:**
+
+```bash
+npm run build
+```
+
+This compiles `index.js` and all dependencies into `dist/index.js`.
+
 ### Testing Locally
 
 Test the action locally using `act`:
@@ -136,26 +146,34 @@ Note: `act` requires Docker to be running.
 
 ## Releasing
 
-### 1. Update Version
+### 1. Build the Bundle
 
-Update the version in `package.json`:
+Always rebuild before releasing to ensure the dist folder is up to date:
 
 ```bash
-npm version patch  # or minor/major
+npm run build
 ```
 
-### 2. Create and Push Tags
+### 2. Commit and Update Version
 
 ```bash
-# Create the version tag
-git tag v1.0.0
+git add dist/
+git commit -m "build: bundle for release"
+npm version patch  # or minor/major (this creates a commit and tag)
+```
+
+### 3. Create and Push Tags
+
+```bash
+# Push the version tag created by npm version
+git push origin main --tags
 
 # Create/update the major version tag (allows users to use @v1)
 git tag -f v1
-git push origin main --tags --force
+git push origin v1 --force
 ```
 
-### 3. Create GitHub Release
+### 4. Create GitHub Release
 
 1. Go to [Releases](https://github.com/PostHog/posthog-github-action/releases)
 2. Click "Draft a new release"
@@ -163,7 +181,7 @@ git push origin main --tags --force
 4. Add release title and notes
 5. Click "Publish release"
 
-### 4. Publish to GitHub Marketplace
+### 5. Publish to GitHub Marketplace
 
 1. When creating/editing the release, check "Publish this Action to the GitHub Marketplace"
 2. Select the primary category (e.g., "Continuous integration")

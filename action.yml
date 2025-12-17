@@ -1,20 +1,20 @@
-name: 'Send event to PostHog'
-description: 'Sends an event to PostHog from GitHub Actions'
+name: "Send event to PostHog"
+description: "Sends an event to PostHog from GitHub Actions"
 inputs:
-    posthog-token:
-        description: 'Your PostHog API token - see project settings section "Project API Key"'
-        required: true
-    posthog-api-host:
-      description: 'Your PostHog API host'
-      required: false
-      default: 'https://us.i.posthog.com'
-    event:
-        description: 'The event name e.g. "GitHubActionCompleted"'
-        required: true
-        default: 'event-from-github-actions'
-    properties:
-        description: 'Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`'
-        required: false
+  posthog-token:
+    description: 'Your PostHog API token - see project settings section "Project API Key"'
+    required: true
+  posthog-api-host:
+    description: "Your PostHog API host"
+    required: false
+    default: "https://us.i.posthog.com"
+  event:
+    description: 'The event name e.g. "GitHubActionCompleted"'
+    required: true
+    default: "event-from-github-actions"
+  properties:
+    description: "Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`"
+    required: false
 runs:
-    using: 'node20'
-    main: 'index.js'
+  using: "node20"
+  main: "dist/index.js"

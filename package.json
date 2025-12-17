@@ -4,6 +4,7 @@
   "description": "Send events to PostHog from GitHub Actions",
   "main": "index.js",
   "scripts": {
+    "build": "ncc build index.js -o dist --minify",
     "test": "act push --secret-file .secrets",
     "test:dry-run": "act push --secret-file .secrets --dryrun"
   },
@@ -26,5 +27,8 @@
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
     "posthog-node": "^4.2.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.3"
   }
 }
