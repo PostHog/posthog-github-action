@@ -1,25 +1,30 @@
 {
   "name": "posthog-github-action",
-  "version": "0.1.0",
-  "description": "",
+  "version": "1.0.0",
+  "description": "Send events to PostHog from GitHub Actions",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "act push --secret-file .secrets",
+    "test:dry-run": "act push --secret-file .secrets --dryrun"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pauldambra/posthog-github-action.git"
+    "url": "git+https://github.com/PostHog/posthog-github-action.git"
   },
-  "keywords": [],
-  "author": "Paul D'Ambra",
-  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "posthog",
+    "analytics",
+    "github-actions"
+  ],
+  "author": "PostHog",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pauldambra/posthog-github-action/issues"
+    "url": "https://github.com/PostHog/posthog-github-action/issues"
   },
-  "homepage": "https://github.com/pauldambra/posthog-github-action#readme",
+  "homepage": "https://github.com/PostHog/posthog-github-action#readme",
   "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1",
-    "posthog-node": "^2.1.0"
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "posthog-node": "^4.2.1"
   }
 }
