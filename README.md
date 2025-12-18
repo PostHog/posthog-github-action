@@ -28,6 +28,22 @@ Optional properties to add to the event. These should be passed as a string cont
 
 The action runs `JSON.parse(properties)` on the input.
 
+### `capture-workflow-duration`
+
+Set to `'true'` to automatically capture workflow duration. When enabled, the action fetches the workflow run start time from the GitHub API and calculates the elapsed time.
+
+Defaults to `'false'`
+
+### `github-token`
+
+GitHub token for API access. **Required** when `capture-workflow-duration` is `'true'`.
+
+Use `${{ secrets.GITHUB_TOKEN }}` which is automatically provided by GitHub Actions.
+
+### `runner`
+
+Optional runner name to include in properties (e.g., `'depot'`, `'github-hosted'`).
+
 ## Automatically Included Properties
 
 The following GitHub context properties are automatically added to every event:
@@ -42,6 +58,14 @@ The following GitHub context properties are automatically added to every event:
 - `repositoryOwner` - The repository owner
 - `actor` - The user who triggered the workflow
 - `eventName` - The event that triggered the workflow
+
+When `capture-workflow-duration` is enabled, these additional properties are included:
+
+- `duration_seconds` - Time elapsed since workflow started (in seconds)
+- `run_url` - URL to the workflow run
+- `run_attempt` - The attempt number of this run
+- `run_id` - The unique ID of this run
+- `run_started_at` - ISO 8601 timestamp when the workflow started
 
 ## Example Usage
 
@@ -64,6 +88,22 @@ Or you can add it as a secret if you prefer not to expose it:
     event: "production-deploy-completed"
     properties: '{"environment": "production"}'
 ```
+
+### Capturing Workflow Duration
+
+Track CI/CD running times by enabling automatic duration capture:
+
+```yaml
+- uses: PostHog/posthog-github-action@v1
+  with:
+    posthog-token: ${{ secrets.POSTHOG_API_KEY }}
+    event: "ci-running-time"
+    capture-workflow-duration: 'true'
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    runner: 'depot'  # optional
+```
+
+This automatically adds `duration_seconds`, `run_url`, `run_attempt`, `run_id`, and `run_started_at` to the event properties.
 
 ### Using with EU Cloud
 
