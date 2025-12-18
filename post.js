@@ -4,35 +4,25 @@ const github = require('@actions/github')
 
 async function run() {
     try {
+        const captureJobDuration = core.getInput('capture-job-duration') === 'true'
+        if (!captureJobDuration) return
+
+        const jobStartTime = core.getState('jobStartTime')
+        if (!jobStartTime) {
+            core.warning('No job start time found in state, skipping job duration capture')
+            return
+        }
+
+        const durationSeconds = Math.floor((Date.now() - parseInt(jobStartTime)) / 1000)
+
         const posthogToken = core.getInput('posthog-token')
         const posthogAPIHost = core.getInput('posthog-api-host')
         const eventName = core.getInput('event')
         const propertiesInput = core.getInput('properties')
-        const captureWorkflowDuration = core.getInput('capture-workflow-duration') === 'true'
-        const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
 
         const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
-
-        if (captureWorkflowDuration) {
-            if (!githubToken) {
-                throw new Error('github-token is required when capture-workflow-duration is true')
-            }
-            const octokit = github.getOctokit(githubToken)
-            const { data: workflowRun } = await octokit.rest.actions.getWorkflowRun({
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
-                run_id: github.context.runId,
-            })
-            const durationSeconds = Math.floor((Date.now() - new Date(workflowRun.run_started_at)) / 1000)
-            Object.assign(properties, {
-                duration_seconds: durationSeconds,
-                run_url: workflowRun.html_url,
-                run_attempt: workflowRun.run_attempt,
-                run_id: workflowRun.id,
-                run_started_at: workflowRun.run_started_at,
-            })
-        }
+        properties.job_duration_seconds = durationSeconds
 
         if (runner) {
             properties.runner = runner
@@ -64,7 +54,7 @@ async function run() {
 
         await client.shutdown()
     } catch (error) {
-        core.setFailed(error.message)
+        core.warning(`Failed to capture job duration: ${error.message}`)
     }
 }
 

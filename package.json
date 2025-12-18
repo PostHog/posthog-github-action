@@ -4,7 +4,10 @@
   "description": "Send events to PostHog from GitHub Actions",
   "main": "index.js",
   "scripts": {
-    "build": "ncc build index.js -o dist --minify",
+    "build": "npm run build:main && npm run build:pre && npm run build:post",
+    "build:main": "ncc build index.js -o dist --minify",
+    "build:pre": "ncc build pre.js -o dist-pre --minify && mv dist-pre/index.js dist/pre.js && rm -rf dist-pre",
+    "build:post": "ncc build post.js -o dist-post --minify && mv dist-post/index.js dist/post.js && rm -rf dist-post",
     "test": "act push --secret-file .secrets",
     "test:dry-run": "act push --secret-file .secrets --dryrun"
   },

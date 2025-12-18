@@ -19,6 +19,22 @@ inputs:
   properties:
     description: "Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`"
     required: false
+  capture-workflow-duration:
+    description: "Capture workflow duration via GitHub API (adds duration_seconds and run metadata)"
+    required: false
+    default: "false"
+  capture-job-duration:
+    description: "Capture job duration using pre/post hooks"
+    required: false
+    default: "false"
+  github-token:
+    description: "GitHub token for API access (required when capture-workflow-duration is true)"
+    required: false
+  runner:
+    description: "Optional runner name to include in properties (e.g., 'depot')"
+    required: false
 runs:
   using: "node20"
+  pre: "dist/pre.js"
   main: "dist/index.js"
+  post: "dist/post.js"
