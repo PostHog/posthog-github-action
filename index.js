@@ -11,9 +11,11 @@ async function run() {
         const captureWorkflowDuration = core.getInput('capture-workflow-duration') === 'true'
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
+        const statusJob = core.getInput('status-job')
 
         const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
 
+        // Workflow duration (from GitHub API)
         if (captureWorkflowDuration) {
             if (!githubToken) {
                 throw new Error('github-token is required when capture-workflow-duration is true')
@@ -24,14 +26,30 @@ async function run() {
                 repo: github.context.repo.repo,
                 run_id: github.context.runId,
             })
-            const durationSeconds = Math.floor((Date.now() - new Date(workflowRun.run_started_at)) / 1000)
-            Object.assign(properties, {
-                duration_seconds: durationSeconds,
-                run_url: workflowRun.html_url,
-                run_attempt: workflowRun.run_attempt,
-                run_id: workflowRun.id,
-                run_started_at: workflowRun.run_started_at,
+            properties.duration_seconds = Math.floor((Date.now() - new Date(workflowRun.run_started_at)) / 1000)
+            properties.run_url = workflowRun.html_url
+            properties.run_attempt = workflowRun.run_attempt
+            properties.run_id = workflowRun.id
+            properties.run_started_at = workflowRun.run_started_at
+        }
+
+        // Workflow status (from referenced job via GitHub API)
+        if (statusJob) {
+            if (!githubToken) {
+                throw new Error('github-token is required when status-job is set')
+            }
+            const octokit = github.getOctokit(githubToken)
+            const { data: jobs } = await octokit.rest.actions.listJobsForWorkflowRun({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                run_id: github.context.runId,
             })
+            const targetJob = jobs.jobs.find(j => j.name === statusJob)
+            if (targetJob) {
+                properties.workflow_status = targetJob.conclusion
+            } else {
+                core.warning(`Job '${statusJob}' not found in workflow run`)
+            }
         }
 
         if (runner) {

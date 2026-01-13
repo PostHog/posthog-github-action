@@ -30,29 +30,19 @@ The action runs `JSON.parse(properties)` on the input.
 
 ### `capture-workflow-duration`
 
-Set to `'true'` to automatically capture workflow duration. When enabled, the action fetches the workflow run start time from the GitHub API and calculates the elapsed time.
-
-Defaults to `'false'`
+Set to `'true'` to capture workflow duration via GitHub API. Adds `duration_seconds` and run metadata.
 
 ### `github-token`
 
-GitHub token for API access. **Required** when `capture-workflow-duration` is `'true'`.
-
-Use `${{ secrets.GITHUB_TOKEN }}` which is automatically provided by GitHub Actions.
-
-### `capture-job-duration`
-
-Set to `'true'` to capture the duration of just this job using pre/post hooks. The event is sent at the end of the job with `job_duration_seconds`.
-
-Defaults to `'false'`
+GitHub token for API access. Required when `capture-workflow-duration` or `status-job` is set.
 
 ### `runner`
 
-Optional runner name to include in properties (e.g., `'depot'`, `'github-hosted'`).
+Optional runner label to include in properties (e.g., `'depot'`).
 
-### `job-conclusion`
+### `status-job`
 
-Job outcome for filtering. Pass `${{ job.status }}` to capture the final job conclusion (`success`, `failure`, or `cancelled`).
+Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `workflow_status`.
 
 ## Automatically Included Properties
 
@@ -69,28 +59,17 @@ The following GitHub context properties are automatically added to every event:
 - `actor` - The user who triggered the workflow
 - `eventName` - The event that triggered the workflow
 
-When `capture-workflow-duration` is enabled, these additional properties are included:
+When `capture-workflow-duration` is enabled:
 
-- `duration_seconds` - Time elapsed since workflow started (in seconds)
+- `duration_seconds` - Time elapsed since workflow started
 - `run_url` - URL to the workflow run
-- `run_attempt` - The attempt number of this run
-- `run_id` - The unique ID of this run
-- `run_started_at` - ISO 8601 timestamp when the workflow started
+- `run_attempt` - The attempt number
+- `run_id` - The unique run ID
+- `run_started_at` - ISO 8601 timestamp
 
-When `capture-job-duration` is enabled, the event includes:
+When `status-job` is set:
 
-- `job_duration_seconds` - Time elapsed for just this job (in seconds)
-- `job_conclusion` - Job outcome if `job-conclusion` input is provided (`success`, `failure`, `cancelled`)
-
-## Groups
-
-All events are automatically grouped by workflow run using PostHog Groups. This allows you to:
-
-- Correlate all events from the same workflow run
-- Aggregate job durations to see total workflow time
-- Use group analytics for workflow-level insights
-
-The group key is: `{owner}/{repo}/{runId}`
+- `workflow_status` - Referenced job's conclusion (`success`, `failure`, `cancelled`)
 
 ## Example Usage
 
@@ -114,37 +93,20 @@ Or you can add it as a secret if you prefer not to expose it:
     properties: '{"environment": "production"}'
 ```
 
-### Capturing Workflow Duration
+### CI Metrics
 
-Track CI/CD running times by enabling automatic duration capture:
+Track workflow duration and status:
 
 ```yaml
 - uses: PostHog/posthog-github-action@v1
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
-    event: "ci-running-time"
+    event: "ci-metrics"
     capture-workflow-duration: 'true'
     github-token: ${{ secrets.GITHUB_TOKEN }}
-    runner: 'depot'  # optional
+    status-job: 'Tests Pass'  # job to check for status
+    runner: 'depot'
 ```
-
-This automatically adds `duration_seconds`, `run_url`, `run_attempt`, `run_id`, and `run_started_at` to the event properties.
-
-### Capturing Job Duration
-
-Track individual job durations using pre/post hooks:
-
-```yaml
-- uses: PostHog/posthog-github-action@v1
-  with:
-    posthog-token: ${{ secrets.POSTHOG_API_KEY }}
-    event: "ci-job-duration"
-    capture-job-duration: 'true'
-    job-conclusion: ${{ job.status }}
-    runner: 'depot'  # optional
-```
-
-The event is sent at the end of the job with `job_duration_seconds` and `job_conclusion`. No GitHub token required.
 
 ### Using with EU Cloud
 
@@ -209,7 +171,7 @@ This action uses [`@vercel/ncc`](https://github.com/vercel/ncc) to bundle all de
 npm run build
 ```
 
-This compiles `index.js`, `pre.js`, and `post.js` into the `dist/` folder.
+This compiles `index.js` and all dependencies into `dist/index.js`.
 
 ### Testing Locally
 

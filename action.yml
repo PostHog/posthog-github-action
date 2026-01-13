@@ -23,21 +23,15 @@ inputs:
     description: "Capture workflow duration via GitHub API (adds duration_seconds and run metadata)"
     required: false
     default: "false"
-  capture-job-duration:
-    description: "Capture job duration using pre/post hooks"
-    required: false
-    default: "false"
   github-token:
-    description: "GitHub token for API access (required when capture-workflow-duration is true)"
+    description: "GitHub token for API access (required for capture-workflow-duration and status-job)"
     required: false
   runner:
-    description: "Optional runner name to include in properties (e.g., 'depot')"
+    description: "Optional runner label to include in properties (e.g., 'depot')"
     required: false
-  job-conclusion:
-    description: "Job outcome for filtering (pass ${{ job.status }})"
+  status-job:
+    description: "Job name to check for workflow status (e.g., 'Django Tests Pass'). Captures that job's conclusion."
     required: false
 runs:
   using: "node20"
-  pre: "dist/pre.js"
   main: "dist/index.js"
-  post: "dist/post.js"
