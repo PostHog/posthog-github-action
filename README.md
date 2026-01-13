@@ -103,23 +103,11 @@ When `status-job` is set:
 
 ## Example Usage
 
-Your API token is write-only and public, so it's safe to include in plain-text:
-
-```yaml
-- uses: PostHog/posthog-github-action@v1
-  with:
-    posthog-token: "phc_abcdefgh123456789"
-    event: "production-deploy-completed"
-    properties: '{"environment": "production", "version": "1.2.3"}'
-```
-
-Or you can add it as a secret if you prefer not to expose it:
-
 ```yaml
 - uses: PostHog/posthog-github-action@v1
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
-    event: "production-deploy-completed"
+    event: "deploy-completed"
     properties: '{"environment": "production"}'
 ```
 

@@ -1,5 +1,5 @@
-name: "Send event to PostHog"
-description: "Sends an event to PostHog from GitHub Actions"
+name: "PostHog CI Metrics"
+description: "Track workflow duration, success rates, and CI performance in PostHog"
 author: "PostHog"
 branding:
   icon: "activity"
