@@ -20,12 +20,17 @@ async function run() {
         const eventName = core.getInput('event')
         const propertiesInput = core.getInput('properties')
         const runner = core.getInput('runner')
+        const jobConclusion = core.getInput('job-conclusion')
 
         const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
         properties.job_duration_seconds = durationSeconds
 
         if (runner) {
             properties.runner = runner
+        }
+
+        if (jobConclusion) {
+            properties.job_conclusion = jobConclusion
         }
 
         const githubContext = {

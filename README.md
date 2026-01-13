@@ -50,6 +50,10 @@ Defaults to `'false'`
 
 Optional runner name to include in properties (e.g., `'depot'`, `'github-hosted'`).
 
+### `job-conclusion`
+
+Job outcome for filtering. Pass `${{ job.status }}` to capture the final job conclusion (`success`, `failure`, or `cancelled`).
+
 ## Automatically Included Properties
 
 The following GitHub context properties are automatically added to every event:
@@ -76,6 +80,7 @@ When `capture-workflow-duration` is enabled, these additional properties are inc
 When `capture-job-duration` is enabled, the event includes:
 
 - `job_duration_seconds` - Time elapsed for just this job (in seconds)
+- `job_conclusion` - Job outcome if `job-conclusion` input is provided (`success`, `failure`, `cancelled`)
 
 ## Groups
 
@@ -135,10 +140,11 @@ Track individual job durations using pre/post hooks:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     event: "ci-job-duration"
     capture-job-duration: 'true'
+    job-conclusion: ${{ job.status }}
     runner: 'depot'  # optional
 ```
 
-The event is sent at the end of the job with `job_duration_seconds`. No GitHub token required.
+The event is sent at the end of the job with `job_duration_seconds` and `job_conclusion`. No GitHub token required.
 
 ### Using with EU Cloud
 

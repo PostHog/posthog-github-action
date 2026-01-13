@@ -33,6 +33,9 @@ inputs:
   runner:
     description: "Optional runner name to include in properties (e.g., 'depot')"
     required: false
+  job-conclusion:
+    description: "Job outcome for filtering (pass ${{ job.status }})"
+    required: false
 runs:
   using: "node20"
   pre: "dist/pre.js"
