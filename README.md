@@ -1,8 +1,36 @@
 # PostHog GitHub Action
 
-This action lets you send events to PostHog from your GitHub Actions.
+Capture CI/CD metrics in PostHog - track workflow duration, success/failure rates, and analyze performance trends with PostHog's full analytics toolkit.
 
-At PostHog we use it to track development metrics and deployment events.
+## Quick Start
+
+```yaml
+jobs:
+  tests:
+    # ... your test job
+
+  ci-metrics:
+    needs: [tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PostHog/posthog-github-action@v1
+        with:
+          posthog-token: ${{ secrets.POSTHOG_API_KEY }}
+          event: 'ci-metrics'
+          capture-workflow-duration: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          status-job: 'tests'
+```
+
+This captures workflow duration, pass/fail status, and GitHub context (repo, branch, commit, actor).
+
+## Why PostHog for CI Metrics?
+
+- **Trends & insights** - duration over time, failure rates by branch/author
+- **Dashboards** - build CI health dashboards alongside product metrics
+- **Alerts** - get notified when builds slow down or failure rates spike
+- **Correlation** - connect CI data with your product analytics
 
 ## Inputs
 
@@ -43,6 +71,8 @@ Optional runner label to include in properties (e.g., `'depot'`).
 ### `status-job`
 
 Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `workflow_status`.
+
+Note: Your metrics job must `needs` the target job and use `if: always()` to run even on failure.
 
 ## Automatically Included Properties
 
@@ -91,21 +121,6 @@ Or you can add it as a secret if you prefer not to expose it:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     event: "production-deploy-completed"
     properties: '{"environment": "production"}'
-```
-
-### CI Metrics
-
-Track workflow duration and status:
-
-```yaml
-- uses: PostHog/posthog-github-action@v1
-  with:
-    posthog-token: ${{ secrets.POSTHOG_API_KEY }}
-    event: "ci-metrics"
-    capture-workflow-duration: 'true'
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    status-job: 'Tests Pass'  # job to check for status
-    runner: 'depot'
 ```
 
 ### Using with EU Cloud
