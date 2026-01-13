@@ -39,12 +39,16 @@ async function run() {
                 throw new Error('github-token is required when status-job is set')
             }
             const octokit = github.getOctokit(githubToken)
-            const { data: jobs } = await octokit.rest.actions.listJobsForWorkflowRun({
+            let targetJob = null
+            for await (const response of octokit.paginate.iterator(octokit.rest.actions.listJobsForWorkflowRun, {
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
                 run_id: github.context.runId,
-            })
-            const targetJob = jobs.jobs.find(j => j.name === statusJob)
+                per_page: 100,
+            })) {
+                targetJob = response.data.find(j => j.name === statusJob)
+                if (targetJob) break
+            }
             if (targetJob) {
                 properties.workflow_status = targetJob.conclusion
             } else {
