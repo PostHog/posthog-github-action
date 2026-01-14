@@ -8,7 +8,7 @@ async function run() {
         const posthogAPIHost = core.getInput('posthog-api-host')
         const eventName = core.getInput('event')
         const propertiesInput = core.getInput('properties')
-        const captureWorkflowDuration = core.getInput('capture-workflow-duration') === 'true'
+        const captureRunDuration = core.getInput('capture-run-duration') === 'true'
         const captureJobDurations = core.getInput('capture-job-durations') === 'true'
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
@@ -18,24 +18,24 @@ async function run() {
 
         // Create octokit instance if any GitHub API feature is enabled
         let octokit = null
-        if (captureWorkflowDuration || captureJobDurations || statusJob) {
+        if (captureRunDuration || captureJobDurations || statusJob) {
             if (!githubToken) {
-                throw new Error('github-token is required when using capture-workflow-duration, capture-job-durations, or status-job')
+                throw new Error('github-token is required when using capture-run-duration, capture-job-durations, or status-job')
             }
             octokit = github.getOctokit(githubToken)
         }
 
         // Workflow duration (from GitHub API)
-        if (captureWorkflowDuration) {
+        if (captureRunDuration) {
             const { data: workflowRun } = await octokit.rest.actions.getWorkflowRun({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
                 run_id: github.context.runId,
             })
             properties.duration_seconds = Math.floor((Date.now() - new Date(workflowRun.run_started_at)) / 1000)
-            properties.run_url = workflowRun.html_url
-            properties.run_attempt = workflowRun.run_attempt
-            properties.run_started_at = workflowRun.run_started_at
+            properties.url = workflowRun.html_url
+            properties.attempt = workflowRun.run_attempt
+            properties.started_at = workflowRun.run_started_at
         }
 
         // Workflow status (from referenced job via GitHub API)

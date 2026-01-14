@@ -19,8 +19,8 @@ inputs:
   properties:
     description: "Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`"
     required: false
-  capture-workflow-duration:
-    description: "Capture workflow duration via GitHub API (adds duration_seconds and run metadata)"
+  capture-run-duration:
+    description: "Capture run duration via GitHub API (adds duration_seconds and run metadata)"
     required: false
     default: "false"
   capture-job-durations:
@@ -28,7 +28,7 @@ inputs:
     required: false
     default: "false"
   github-token:
-    description: "GitHub token for API access (required for capture-workflow-duration, capture-job-durations, and status-job)"
+    description: "GitHub token for API access (required for capture-run-duration, capture-job-durations, and status-job)"
     required: false
   runner:
     description: "Optional runner label to include in properties (e.g., 'depot')"

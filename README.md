@@ -18,12 +18,12 @@ jobs:
         with:
           posthog-token: ${{ secrets.POSTHOG_API_KEY }}
           event: 'ci-metrics'
-          capture-workflow-duration: 'true'
+          capture-run-duration: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
           status-job: 'tests'
 ```
 
-This captures workflow duration, pass/fail status, and GitHub context (repo, branch, commit, actor).
+This captures run duration, pass/fail status, and GitHub context (repo, branch, commit, actor).
 
 ## Why PostHog for CI Metrics?
 
@@ -56,17 +56,17 @@ Optional properties to add to the event. These should be passed as a string cont
 
 The action runs `JSON.parse(properties)` on the input.
 
-### `capture-workflow-duration`
+### `capture-run-duration`
 
-Set to `'true'` to capture workflow duration via GitHub API. Adds `duration_seconds` and run metadata.
+Set to `true` to capture run duration via GitHub API. Adds `duration_seconds` and run metadata.
 
 ### `capture-job-durations`
 
-Set to `'true'` to capture timing and status for each job in the workflow. Emits one additional event per completed job (named `{event}-job`, e.g., `ci-metrics-job`). All events share the same `workflow_run` group for correlation in PostHog.
+Set to `true` to capture timing and status for each job in the workflow. Emits one additional event per completed job (named `{event}-job`, e.g., `ci-metrics-job`). All events share the same `workflow_run` group for correlation in PostHog.
 
 ### `github-token`
 
-GitHub token for API access. Required when `capture-workflow-duration`, `capture-job-durations`, or `status-job` is set.
+GitHub token for API access. Required when `capture-run-duration`, `capture-job-durations`, or `status-job` is set.
 
 ### `runner`
 
@@ -92,12 +92,12 @@ The following GitHub context properties are automatically added to every event:
 - `actor` - The user who triggered the workflow
 - `eventName` - The event that triggered the workflow
 
-When `capture-workflow-duration` is enabled:
+When `capture-run-duration` is enabled:
 
-- `duration_seconds` - Time elapsed since workflow started
-- `run_url` - URL to the workflow run
-- `run_attempt` - The attempt number
-- `run_started_at` - ISO 8601 timestamp
+- `duration_seconds` - Time elapsed since run started
+- `url` - URL to the run
+- `attempt` - The attempt number
+- `started_at` - ISO 8601 timestamp
 
 When `status-job` is set:
 
@@ -112,7 +112,34 @@ When `capture-job-durations` is enabled, each per-job event (`{event}-job`) incl
 - `completed_at` - ISO 8601 timestamp
 - `runner` - The runner that executed the job
 
+## Groups & Correlation
+
+All events are tagged with a `workflow_run` group (`owner/repo/run_id`) for correlation in PostHog.
+
+When `capture-job-durations` is enabled, group properties are also set via `groupIdentify`:
+
+```
+workflow_run: PostHog/posthog/12345
+├── group properties: { conclusion: 'success' }     ← only with capture-job-durations
+│
+├── event: ci-metrics                               ← run-level metrics
+│   └── { duration_seconds: 1080, conclusion: 'success', ... }
+│
+├── event: ci-metrics-job                           ← per-job metrics
+│   └── { name: 'Build', duration_seconds: 120, conclusion: 'success', ... }
+│
+└── event: ci-metrics-job
+    └── { name: 'Test', duration_seconds: 300, conclusion: 'success', ... }
+```
+
+This enables:
+- **Filter job events by workflow outcome** - use group property `workflow_run.conclusion`
+- **See all jobs in a run** - filter by `workflow_run = owner/repo/run_id`
+- **Correlate across events** - breakdown by group in insights
+
 ## Example Usage
+
+### Custom event with properties
 
 ```yaml
 - uses: PostHog/posthog-github-action@v1
@@ -122,42 +149,72 @@ When `capture-job-durations` is enabled, each per-job event (`{event}-job`) incl
     properties: '{"environment": "production"}'
 ```
 
-### Using with EU Cloud
+### With run duration
 
-If you're using PostHog EU Cloud, specify the EU host:
+```yaml
+- uses: PostHog/posthog-github-action@v1
+  with:
+    posthog-token: ${{ secrets.POSTHOG_API_KEY }}
+    event: "ci-metrics"
+    capture-run-duration: true
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### With per-job metrics
+
+```yaml
+- uses: PostHog/posthog-github-action@v1
+  with:
+    posthog-token: ${{ secrets.POSTHOG_API_KEY }}
+    event: "ci-metrics"
+    capture-run-duration: true
+    capture-job-durations: true
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    status-job: 'Tests'
+```
+
+### Using with EU Cloud
 
 ```yaml
 - uses: PostHog/posthog-github-action@v1
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     posthog-api-host: "https://eu.i.posthog.com"
-    event: "deployment-completed"
+    event: "ci-metrics"
+    capture-run-duration: true
+    github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Complete Workflow Example
 
 ```yaml
-name: Deploy
+name: CI
 
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: npm test
 
-      - name: Deploy application
-        run: echo "Deploying..."
-
-      - name: Track deployment in PostHog
-        uses: PostHog/posthog-github-action@v1
+  ci-metrics:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: PostHog/posthog-github-action@v1
         with:
           posthog-token: ${{ secrets.POSTHOG_API_KEY }}
-          event: "deployment-completed"
-          properties: '{"branch": "${{ github.ref_name }}"}'
+          event: "ci-metrics"
+          capture-run-duration: true
+          capture-job-durations: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          status-job: 'test'
 ```
 
 ## Development
