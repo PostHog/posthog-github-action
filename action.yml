@@ -13,9 +13,8 @@ inputs:
     required: false
     default: "https://us.i.posthog.com"
   event:
-    description: 'The event name e.g. "GitHubActionCompleted"'
-    required: true
-    default: "event-from-github-actions"
+    description: 'The event name to capture (e.g., "ci-metrics")'
+    required: false
   properties:
     description: "Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`"
     required: false
@@ -36,6 +35,13 @@ inputs:
   status-job:
     description: "Job name to check for workflow status (e.g., 'Django Tests Pass'). Captures that job's conclusion."
     required: false
+  annotation:
+    description: "Create a PostHog annotation with the provided text (e.g., 'Deployed to production')"
+    required: false
+  annotation-scope:
+    description: "Annotation scope: 'project' (default) or 'organization'"
+    required: false
+    default: "project"
 runs:
   using: "node20"
   main: "dist/index.js"
