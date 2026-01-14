@@ -9,18 +9,24 @@ async function run() {
         const eventName = core.getInput('event')
         const propertiesInput = core.getInput('properties')
         const captureWorkflowDuration = core.getInput('capture-workflow-duration') === 'true'
+        const captureJobDurations = core.getInput('capture-job-durations') === 'true'
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
         const statusJob = core.getInput('status-job')
 
         const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
 
+        // Create octokit instance if any GitHub API feature is enabled
+        let octokit = null
+        if (captureWorkflowDuration || captureJobDurations || statusJob) {
+            if (!githubToken) {
+                throw new Error('github-token is required when using capture-workflow-duration, capture-job-durations, or status-job')
+            }
+            octokit = github.getOctokit(githubToken)
+        }
+
         // Workflow duration (from GitHub API)
         if (captureWorkflowDuration) {
-            if (!githubToken) {
-                throw new Error('github-token is required when capture-workflow-duration is true')
-            }
-            const octokit = github.getOctokit(githubToken)
             const { data: workflowRun } = await octokit.rest.actions.getWorkflowRun({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
@@ -35,10 +41,6 @@ async function run() {
 
         // Workflow status (from referenced job via GitHub API)
         if (statusJob) {
-            if (!githubToken) {
-                throw new Error('github-token is required when status-job is set')
-            }
-            const octokit = github.getOctokit(githubToken)
             let targetJob = null
             for await (const response of octokit.paginate.iterator(octokit.rest.actions.listJobsForWorkflowRun, {
                 owner: github.context.repo.owner,
@@ -73,16 +75,50 @@ async function run() {
             eventName: github.context.eventName,
         }
 
+        const workflowRunGroup = `${github.context.repo.owner}/${github.context.repo.repo}/${github.context.runId}`
         const client = new PostHog(posthogToken, { host: posthogAPIHost })
 
+        // Main workflow event
         client.capture({
             distinctId: 'posthog-github-action',
             event: eventName,
             properties: { ...properties, ...githubContext },
-            groups: {
-                workflow_run: `${github.context.repo.owner}/${github.context.repo.repo}/${github.context.runId}`,
-            },
+            groups: { workflow_run: workflowRunGroup },
         })
+
+        // Per-job timing events
+        if (captureJobDurations) {
+            for await (const response of octokit.paginate.iterator(octokit.rest.actions.listJobsForWorkflowRun, {
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                run_id: github.context.runId,
+                per_page: 100,
+            })) {
+                for (const job of response.data) {
+                    // Skip jobs that haven't completed or are the metrics job itself
+                    if (!job.completed_at || job.name === github.context.job) continue
+
+                    const durationSeconds = Math.floor(
+                        (new Date(job.completed_at) - new Date(job.started_at)) / 1000
+                    )
+
+                    client.capture({
+                        distinctId: 'posthog-github-action',
+                        event: `${eventName}-job`,
+                        properties: {
+                            job_name: job.name,
+                            job_duration_seconds: durationSeconds,
+                            job_conclusion: job.conclusion,
+                            job_started_at: job.started_at,
+                            job_completed_at: job.completed_at,
+                            job_runner: job.runner_name,
+                            ...githubContext,
+                        },
+                        groups: { workflow_run: workflowRunGroup },
+                    })
+                }
+            }
+        }
 
         await client.shutdown()
     } catch (error) {

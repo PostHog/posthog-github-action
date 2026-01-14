@@ -23,8 +23,12 @@ inputs:
     description: "Capture workflow duration via GitHub API (adds duration_seconds and run metadata)"
     required: false
     default: "false"
+  capture-job-durations:
+    description: "Capture timing and status for each job in the workflow (emits one event per job)"
+    required: false
+    default: "false"
   github-token:
-    description: "GitHub token for API access (required for capture-workflow-duration and status-job)"
+    description: "GitHub token for API access (required for capture-workflow-duration, capture-job-durations, and status-job)"
     required: false
   runner:
     description: "Optional runner label to include in properties (e.g., 'depot')"

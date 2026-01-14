@@ -60,9 +60,13 @@ The action runs `JSON.parse(properties)` on the input.
 
 Set to `'true'` to capture workflow duration via GitHub API. Adds `duration_seconds` and run metadata.
 
+### `capture-job-durations`
+
+Set to `'true'` to capture timing and status for each job in the workflow. Emits one additional event per completed job (named `{event}-job`, e.g., `ci-metrics-job`). All events share the same `workflow_run` group for correlation in PostHog.
+
 ### `github-token`
 
-GitHub token for API access. Required when `capture-workflow-duration` or `status-job` is set.
+GitHub token for API access. Required when `capture-workflow-duration`, `capture-job-durations`, or `status-job` is set.
 
 ### `runner`
 
@@ -100,6 +104,15 @@ When `capture-workflow-duration` is enabled:
 When `status-job` is set:
 
 - `workflow_status` - Referenced job's conclusion (`success`, `failure`, `cancelled`)
+
+When `capture-job-durations` is enabled, each per-job event (`{event}-job`) includes:
+
+- `job_name` - The job's display name
+- `job_duration_seconds` - Time from job start to completion
+- `job_conclusion` - Job result (`success`, `failure`, `cancelled`, `skipped`)
+- `job_started_at` - ISO 8601 timestamp
+- `job_completed_at` - ISO 8601 timestamp
+- `job_runner` - The runner that executed the job
 
 ## Example Usage
 
