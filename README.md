@@ -268,39 +268,24 @@ Always rebuild before releasing to ensure the dist folder is up to date:
 npm run build
 ```
 
-### 2. Commit and Update Version
+### 2. Commit and Merge
 
 ```bash
-git add dist/
-git commit -m "build: bundle for release"
-npm version patch  # or minor/major (this creates a commit and tag)
+# Update version in package.json manually
+git add package.json dist/
+git commit -m "1.x.x"
+# Create PR and merge to main
 ```
 
-### 3. Create and Push Tags
+### 3. Tag the Release
 
 ```bash
-# Push the version tag created by npm version
-git push origin main --tags
-
-# Create/update the major version tag (allows users to use @v1)
-git tag -f v1
-git push origin v1 --force
+git checkout main && git pull
+git tag v1.x.x
+git push origin v1.x.x
 ```
 
-### 4. Create GitHub Release
-
-1. Go to [Releases](https://github.com/PostHog/posthog-github-action/releases)
-2. Click "Draft a new release"
-3. Select the version tag (e.g., `v1.0.0`)
-4. Add release title and notes
-5. Click "Publish release"
-
-### 5. Publish to GitHub Marketplace
-
-1. When creating/editing the release, check "Publish this Action to the GitHub Marketplace"
-2. Select the primary category (e.g., "Continuous integration")
-3. Ensure `action.yml` has all required fields (`name`, `description`, `author`)
-4. Publish the release
+The release workflow creates the GitHub Release and updates the `v1` tag automatically.
 
 ## License
 
