@@ -1,5 +1,5 @@
-name: "Send event to PostHog"
-description: "Sends an event to PostHog from GitHub Actions"
+name: "PostHog CI Metrics"
+description: "Track workflow duration, success rates, and CI performance in PostHog"
 author: "PostHog"
 branding:
   icon: "activity"
@@ -18,6 +18,23 @@ inputs:
     default: "event-from-github-actions"
   properties:
     description: "Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`"
+    required: false
+  capture-run-duration:
+    description: "Capture run duration via GitHub API (adds duration_seconds and run metadata)"
+    required: false
+    default: "false"
+  capture-job-durations:
+    description: "Capture timing and status for each job in the workflow (emits one event per job)"
+    required: false
+    default: "false"
+  github-token:
+    description: "GitHub token for API access (required for capture-run-duration, capture-job-durations, and status-job)"
+    required: false
+  runner:
+    description: "Optional runner label to include in properties (e.g., 'depot')"
+    required: false
+  status-job:
+    description: "Job name to check for workflow status (e.g., 'Django Tests Pass'). Captures that job's conclusion."
     required: false
 runs:
   using: "node20"
