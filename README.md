@@ -74,7 +74,7 @@ Optional runner label to include in properties (e.g., `'depot'`).
 
 ### `status-job`
 
-Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `workflow_status`.
+Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `conclusion`.
 
 Note: Your metrics job must `needs` the target job and use `if: always()` to run even on failure.
 
@@ -85,7 +85,6 @@ The following GitHub context properties are automatically added to every event:
 - `sha` - The commit SHA
 - `ref` - The branch or tag ref
 - `workflow` - The workflow name
-- `job` - The job name
 - `runNumber` - The run number
 - `runId` - The run ID
 - `repository` - The repository name
@@ -98,21 +97,20 @@ When `capture-workflow-duration` is enabled:
 - `duration_seconds` - Time elapsed since workflow started
 - `run_url` - URL to the workflow run
 - `run_attempt` - The attempt number
-- `run_id` - The unique run ID
 - `run_started_at` - ISO 8601 timestamp
 
 When `status-job` is set:
 
-- `workflow_status` - Referenced job's conclusion (`success`, `failure`, `cancelled`)
+- `conclusion` - Referenced job's conclusion (`success`, `failure`, `cancelled`)
 
 When `capture-job-durations` is enabled, each per-job event (`{event}-job`) includes:
 
-- `job_name` - The job's display name
-- `job_duration_seconds` - Time from job start to completion
-- `job_conclusion` - Job result (`success`, `failure`, `cancelled`, `skipped`)
-- `job_started_at` - ISO 8601 timestamp
-- `job_completed_at` - ISO 8601 timestamp
-- `job_runner` - The runner that executed the job
+- `name` - The job's display name
+- `duration_seconds` - Time from job start to completion
+- `conclusion` - Job result (`success`, `failure`, `cancelled`, `skipped`)
+- `started_at` - ISO 8601 timestamp
+- `completed_at` - ISO 8601 timestamp
+- `runner` - The runner that executed the job
 
 ## Example Usage
 

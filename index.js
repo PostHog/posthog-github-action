@@ -35,7 +35,6 @@ async function run() {
             properties.duration_seconds = Math.floor((Date.now() - new Date(workflowRun.run_started_at)) / 1000)
             properties.run_url = workflowRun.html_url
             properties.run_attempt = workflowRun.run_attempt
-            properties.run_id = workflowRun.id
             properties.run_started_at = workflowRun.run_started_at
         }
 
@@ -52,7 +51,7 @@ async function run() {
                 if (targetJob) break
             }
             if (targetJob) {
-                properties.workflow_status = targetJob.conclusion
+                properties.conclusion = targetJob.conclusion
             } else {
                 core.warning(`Job '${statusJob}' not found in workflow run`)
             }
@@ -66,7 +65,6 @@ async function run() {
             sha: github.context.sha,
             ref: github.context.ref,
             workflow: github.context.workflow,
-            job: github.context.job,
             runNumber: github.context.runNumber,
             runId: github.context.runId,
             repository: github.context.repo.repo,
@@ -88,6 +86,15 @@ async function run() {
 
         // Per-job timing events
         if (captureJobDurations) {
+            // Set group properties for filtering job events by workflow outcome
+            if (properties.conclusion) {
+                client.groupIdentify({
+                    groupType: 'workflow_run',
+                    groupKey: workflowRunGroup,
+                    properties: { conclusion: properties.conclusion },
+                })
+            }
+
             for await (const response of octokit.paginate.iterator(octokit.rest.actions.listJobsForWorkflowRun, {
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
@@ -106,12 +113,12 @@ async function run() {
                         distinctId: 'posthog-github-action',
                         event: `${eventName}-job`,
                         properties: {
-                            job_name: job.name,
-                            job_duration_seconds: durationSeconds,
-                            job_conclusion: job.conclusion,
-                            job_started_at: job.started_at,
-                            job_completed_at: job.completed_at,
-                            job_runner: job.runner_name,
+                            name: job.name,
+                            duration_seconds: durationSeconds,
+                            conclusion: job.conclusion,
+                            started_at: job.started_at,
+                            completed_at: job.completed_at,
+                            runner: job.runner_name,
                             ...githubContext,
                         },
                         groups: { workflow_run: workflowRunGroup },
