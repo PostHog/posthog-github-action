@@ -37,5 +37,5 @@ inputs:
     description: "Job name to check for workflow status (e.g., 'Django Tests Pass'). Captures that job's conclusion."
     required: false
 runs:
-  using: "node20"
+  using: "node24"
   main: "dist/index.js"
