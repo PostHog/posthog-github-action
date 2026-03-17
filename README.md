@@ -46,9 +46,7 @@ Defaults to `https://us.i.posthog.com`
 
 ### `event`
 
-**Required** The event name to send to PostHog.
-
-Defaults to `event-from-github-actions`
+The event name to send to PostHog (e.g., `"ci-metrics"`).
 
 ### `properties`
 
@@ -77,6 +75,14 @@ Optional runner label to include in properties (e.g., `'depot'`).
 Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `conclusion`.
 
 Note: Your metrics job must `needs` the target job and use `if: always()` to run even on failure.
+
+### `annotation`
+
+Create a PostHog annotation with the provided text (e.g., `"Deployed to production"`).
+
+### `annotation-scope`
+
+Annotation scope: `'project'` (default) or `'organization'`.
 
 ## Automatically Included Properties
 
@@ -183,6 +189,15 @@ This enables:
     event: "ci-metrics"
     capture-run-duration: true
     github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Create annotation on deploy
+
+```yaml
+- uses: PostHog/posthog-github-action@v1
+  with:
+    posthog-token: ${{ secrets.POSTHOG_API_KEY }}
+    annotation: "Deployed to production"
 ```
 
 ### Complete Workflow Example

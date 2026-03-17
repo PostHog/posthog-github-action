@@ -2,6 +2,28 @@ const { PostHog } = require('posthog-node')
 const core = require('@actions/core')
 const github = require('@actions/github')
 
+async function createAnnotation(apiHost, token, content, scope) {
+    const response = await fetch(`${apiHost}/api/projects/@current/annotations/`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content,
+            scope: scope === 'organization' ? 'organization' : 'project',
+            date_marker: new Date().toISOString(),
+        }),
+    })
+
+    if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Failed to create annotation: ${response.status} ${error}`)
+    }
+
+    return response.json()
+}
+
 async function run() {
     try {
         const posthogToken = core.getInput('posthog-token')
@@ -13,10 +35,22 @@ async function run() {
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
         const statusJob = core.getInput('status-job')
+        const annotation = core.getInput('annotation')
+        const annotationScope = core.getInput('annotation-scope')
 
-        const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
+        if (!eventName && !annotation) {
+            throw new Error('At least one of event or annotation is required')
+        }
 
-        // Create octokit instance if any GitHub API feature is enabled
+        // Create annotation (can be standalone or combined with event capture)
+        if (annotation) {
+            await createAnnotation(posthogAPIHost, posthogToken, annotation, annotationScope)
+            core.info(`Created annotation: ${annotation}`)
+        }
+
+        if (!eventName) return
+
+        // Event capture requires GitHub API for enrichment features
         let octokit = null
         if (captureRunDuration || captureJobDurations || statusJob) {
             if (!githubToken) {
@@ -24,6 +58,8 @@ async function run() {
             }
             octokit = github.getOctokit(githubToken)
         }
+
+        const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
 
         // Workflow duration (from GitHub API)
         if (captureRunDuration) {
