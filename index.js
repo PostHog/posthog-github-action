@@ -2,6 +2,15 @@ const { PostHog } = require('posthog-node')
 const core = require('@actions/core')
 const github = require('@actions/github')
 
+const KNOWN_BOT_ACTORS = ['Copilot']
+
+function classifyActor(actor) {
+    if (!actor) return 'unknown'
+    if (actor.endsWith('[bot]')) return 'bot'
+    if (KNOWN_BOT_ACTORS.includes(actor)) return 'bot'
+    return 'human'
+}
+
 async function run() {
     try {
         const posthogToken = core.getInput('posthog-token')
@@ -70,6 +79,7 @@ async function run() {
             repository: github.context.repo.repo,
             repositoryOwner: github.context.repo.owner,
             actor: github.context.actor,
+            actor_type: classifyActor(github.context.actor),
             eventName: github.context.eventName,
         }
 

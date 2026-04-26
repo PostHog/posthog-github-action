@@ -90,6 +90,7 @@ The following GitHub context properties are automatically added to every event:
 - `repository` - The repository name
 - `repositoryOwner` - The repository owner
 - `actor` - The user who triggered the workflow
+- `actor_type` - `"bot"` if `actor` ends in `[bot]` or matches a known bot account (currently `Copilot`), otherwise `"human"`. Useful for slicing CI metrics by bot vs. human-driven runs.
 - `eventName` - The event that triggered the workflow
 
 When `capture-run-duration` is enabled:
