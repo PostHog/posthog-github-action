@@ -47,18 +47,23 @@ async function run() {
             properties.started_at = workflowRun.run_started_at
         }
 
-        // Workflow status (from referenced job via GitHub API)
-        if (statusJob) {
-            let targetJob = null
+        // Fetch all jobs once if any feature needs them (status-job or capture-job-durations)
+        let allJobs = null
+        if (statusJob || captureJobDurations) {
+            allJobs = []
             for await (const response of octokit.paginate.iterator(octokit.rest.actions.listJobsForWorkflowRun, {
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
                 run_id: github.context.runId,
                 per_page: 100,
             })) {
-                targetJob = response.data.find(j => j.name === statusJob)
-                if (targetJob) break
+                allJobs.push(...response.data)
             }
+        }
+
+        // Workflow status (from referenced job)
+        if (statusJob) {
+            const targetJob = allJobs.find(j => j.name === statusJob)
             if (targetJob) {
                 properties.conclusion = targetJob.conclusion
             } else {
@@ -105,35 +110,28 @@ async function run() {
                 })
             }
 
-            for await (const response of octokit.paginate.iterator(octokit.rest.actions.listJobsForWorkflowRun, {
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
-                run_id: github.context.runId,
-                per_page: 100,
-            })) {
-                for (const job of response.data) {
-                    // Skip jobs that haven't completed or are the metrics job itself
-                    if (!job.completed_at || job.name === github.context.job) continue
+            for (const job of allJobs) {
+                // Skip jobs that haven't completed or are the metrics job itself
+                if (!job.completed_at || job.name === github.context.job) continue
 
-                    const durationSeconds = Math.floor(
-                        (new Date(job.completed_at) - new Date(job.started_at)) / 1000
-                    )
+                const durationSeconds = Math.floor(
+                    (new Date(job.completed_at) - new Date(job.started_at)) / 1000
+                )
 
-                    client.capture({
-                        distinctId: 'posthog-github-action',
-                        event: `${eventName}-job`,
-                        properties: {
-                            name: job.name,
-                            duration_seconds: durationSeconds,
-                            conclusion: job.conclusion,
-                            started_at: job.started_at,
-                            completed_at: job.completed_at,
-                            runner: job.runner_name,
-                            ...githubContext,
-                        },
-                        groups: { workflow_run: workflowRunGroup },
-                    })
-                }
+                client.capture({
+                    distinctId: 'posthog-github-action',
+                    event: `${eventName}-job`,
+                    properties: {
+                        name: job.name,
+                        duration_seconds: durationSeconds,
+                        conclusion: job.conclusion,
+                        started_at: job.started_at,
+                        completed_at: job.completed_at,
+                        runner: job.runner_name,
+                        ...githubContext,
+                    },
+                    groups: { workflow_run: workflowRunGroup },
+                })
             }
         }
 
