@@ -6,7 +6,7 @@ jobs:
     name: A job to test that this works
     steps:
       - name: Push an event to PostHog
-        uses: PostHog/posthog-github-action@main
+        uses: PostHog/posthog-github-action@58dea254b598fb5d469c0699c98af8288a7f7650
         with:
           posthog-token: ${{secrets.POSTHOG_API_TOKEN}}
           event: 'gh-actions-test-emitting-from-actions'
