@@ -50,7 +50,7 @@ inputs:
     required: false
     default: "false"
   annotation-api-host:
-    description: "Host for the PostHog app API used to create annotations. This is the app host (e.g. https://us.posthog.com), NOT the event ingestion host in posthog-api-host."
+    description: "Host for the PostHog app API used to create annotations — the app host (e.g. https://us.posthog.com, https://eu.posthog.com, or a self-hosted host), NOT the event ingestion host in posthog-api-host. Not restricted to PostHog Cloud."
     required: false
     default: "https://us.posthog.com"
   annotation-project-id:

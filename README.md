@@ -96,7 +96,7 @@ Set to `'true'` to hide the annotation from the PostHog UI (charts and the annot
 
 ### `annotation-api-host`
 
-Host for the PostHog **app** API used to create annotations — e.g. `https://us.posthog.com` (default) or `https://eu.posthog.com`. This is distinct from `posthog-api-host`, which is the event _ingestion_ host (`*.i.posthog.com`); the annotations endpoint lives on the app host.
+Host for the PostHog **app** API used to create annotations — `https://us.posthog.com` (default), `https://eu.posthog.com`, or your own host for a self-hosted instance. This is distinct from `posthog-api-host`, which is the event _ingestion_ host (`*.i.posthog.com`); the annotations endpoint lives on the app host. The host is not restricted to PostHog Cloud, so self-hosted deployments work.
 
 ### `annotation-project-id`
 
