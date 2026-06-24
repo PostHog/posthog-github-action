@@ -38,6 +38,9 @@ inputs:
   annotation:
     description: "Create a PostHog annotation with this text (e.g., 'Deployed to production'). Can be used standalone or alongside event capture."
     required: false
+  annotation-token:
+    description: "API key for the annotations REST API — a personal API key with the annotation:write scope. Defaults to posthog-token. Set this explicitly when capturing an event AND creating an annotation in the same step, because event ingestion uses the project API key while annotations need a personal key."
+    required: false
   annotation-scope:
     description: "Annotation scope: 'project' (default) or 'organization'"
     required: false

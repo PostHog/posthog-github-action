@@ -61,7 +61,7 @@ async function run() {
     try {
         const posthogToken = core.getInput('posthog-token')
         const posthogAPIHost = core.getInput('posthog-api-host')
-        const eventName = core.getInput('event')
+        let eventName = core.getInput('event')
         const propertiesInput = core.getInput('properties')
         const captureRunDuration = core.getInput('capture-run-duration') === 'true'
         const captureJobDurations = core.getInput('capture-job-durations') === 'true'
@@ -75,9 +75,16 @@ async function run() {
         const annotationProjectId = core.getInput('annotation-project-id')
         const annotationDedupe = core.getInput('annotation-dedupe') === 'true'
         const annotationDedupeKey = core.getInput('annotation-dedupe-key')
+        // Annotations use the app REST API, which needs a personal API key with
+        // annotation:write — distinct from the project key used for event ingestion.
+        // Defaults to posthog-token so annotation-only callers can pass one key.
+        const annotationToken = core.getInput('annotation-token') || posthogToken
 
+        // Preserve the historical default for legacy event-only callers (omitting
+        // `event` used to capture `event-from-github-actions`), while letting an
+        // annotation-only call (annotation set, event omitted) skip event capture.
         if (!eventName && !annotation) {
-            throw new Error('At least one of `event` or `annotation` is required')
+            eventName = 'event-from-github-actions'
         }
 
         // Annotations can be created standalone or alongside event capture. They use
@@ -86,7 +93,7 @@ async function run() {
             const annotationArgs = {
                 apiHost: annotationApiHost,
                 projectId: annotationProjectId,
-                token: posthogToken,
+                token: annotationToken,
             }
             // Optional idempotency: skip if a matching annotation already exists, so a
             // re-run doesn't duplicate it. Match on the dedupe key (a stable prefix) or

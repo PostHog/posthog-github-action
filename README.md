@@ -80,6 +80,12 @@ Note: Your metrics job must `needs` the target job and use `if: always()` to run
 
 Create a PostHog annotation with this text (e.g., `"Deployed to production"`). Can be used standalone or alongside event capture.
 
+### `annotation-token`
+
+API key for the annotations REST API — a **personal API key** with the `annotation:write` scope. Defaults to `posthog-token`.
+
+Event ingestion uses a **project** API key, while the annotations REST API needs a **personal** key, so the two auth schemes differ. For annotation-only usage you can just set `posthog-token` to the personal key. When you capture an event **and** create an annotation in the same step, set `posthog-token` to the project key and `annotation-token` to the personal key.
+
 ### `annotation-scope`
 
 Annotation scope: `'project'` (default) or `'organization'`.
