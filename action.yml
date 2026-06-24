@@ -54,6 +54,13 @@ inputs:
     description: "Project to create the annotation in. Defaults to '@current' (the project the token belongs to)."
     required: false
     default: "@current"
+  annotation-dedupe:
+    description: "If 'true', skip creating the annotation when a matching one already exists (idempotent re-runs). Match is by annotation-dedupe-key, or the full annotation text if no key is set. Defaults to 'false'."
+    required: false
+    default: "false"
+  annotation-dedupe-key:
+    description: "Content prefix used to detect an existing annotation when annotation-dedupe is true. Defaults to the full annotation text. Use a stable prefix (e.g. 'Deployed repo@sha to env') so a volatile suffix like a PR list doesn't defeat dedupe."
+    required: false
 runs:
   using: "node24"
   main: "dist/index.js"

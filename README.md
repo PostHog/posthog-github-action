@@ -96,6 +96,14 @@ Host for the PostHog **app** API used to create annotations — e.g. `https://us
 
 Project to create the annotation in. Defaults to `'@current'` (the project the token belongs to). Set an explicit numeric id for deterministic targeting.
 
+### `annotation-dedupe`
+
+Set to `'true'` to skip creating the annotation when a matching one already exists, making re-runs idempotent (e.g. a GitHub "Re-run jobs" won't duplicate a deploy marker). The match is by `annotation-dedupe-key`, or the full annotation text if no key is set. Defaults to `'false'`.
+
+### `annotation-dedupe-key`
+
+Content prefix used to detect an existing annotation when `annotation-dedupe` is `'true'`. Defaults to the full annotation text. Use a stable prefix (e.g. `"Deployed acme/app@abc1234 to prod"`) so a volatile suffix — like a list of PR numbers — doesn't defeat deduplication.
+
 ## Automatically Included Properties
 
 The following GitHub context properties are automatically added to every event:
@@ -214,15 +222,18 @@ This enables:
     annotation-scope: organization
 ```
 
-### Hidden deploy marker (readable via API/MCP, hidden from the UI)
+### Hidden, idempotent deploy marker (readable via API/MCP, hidden from the UI)
 
 ```yaml
 - uses: PostHog/posthog-github-action@v1
   with:
     posthog-token: ${{ secrets.POSTHOG_ANNOTATION_API_KEY }}
-    annotation: "Deployed to prod-us"
+    annotation: "Deployed ${{ github.repository }}@${{ github.sha }} to prod-us"
     annotation-hidden: true
     annotation-project-id: "2"
+    # Re-running the workflow won't create a duplicate marker for this repo@sha+env
+    annotation-dedupe: true
+    annotation-dedupe-key: "Deployed ${{ github.repository }}@${{ github.sha }} to prod-us"
 ```
 
 ### Complete Workflow Example

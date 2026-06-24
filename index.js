@@ -11,6 +11,23 @@ function classifyActor(actor) {
     return 'human'
 }
 
+async function annotationExists({ apiHost, projectId, token, key }) {
+    const url = new URL(`${apiHost}/api/projects/${projectId}/annotations/`)
+    url.searchParams.set('search', key)
+
+    const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!response.ok) {
+        const detail = await response.text()
+        throw new Error(`Failed to list annotations: ${response.status} ${detail}`)
+    }
+
+    const data = await response.json()
+    return (data.results || []).some((a) => (a.content || '').startsWith(key))
+}
+
 async function createAnnotation({ apiHost, projectId, token, content, scope, hidden }) {
     const body = {
         content,
@@ -56,6 +73,8 @@ async function run() {
         const annotationHidden = core.getInput('annotation-hidden') === 'true'
         const annotationApiHost = core.getInput('annotation-api-host')
         const annotationProjectId = core.getInput('annotation-project-id')
+        const annotationDedupe = core.getInput('annotation-dedupe') === 'true'
+        const annotationDedupeKey = core.getInput('annotation-dedupe-key')
 
         if (!eventName && !annotation) {
             throw new Error('At least one of `event` or `annotation` is required')
@@ -64,15 +83,30 @@ async function run() {
         // Annotations can be created standalone or alongside event capture. They use
         // the app API host (annotation-api-host), not the event ingestion host.
         if (annotation) {
-            await createAnnotation({
+            const annotationArgs = {
                 apiHost: annotationApiHost,
                 projectId: annotationProjectId,
                 token: posthogToken,
-                content: annotation,
-                scope: annotationScope,
-                hidden: annotationHidden,
-            })
-            core.info(`Created PostHog annotation: ${annotation}`)
+            }
+            // Optional idempotency: skip if a matching annotation already exists, so a
+            // re-run doesn't duplicate it. Match on the dedupe key (a stable prefix) or
+            // the full content. Fail open — a missing marker is worse than a duplicate.
+            const dedupeKey = annotationDedupeKey || annotation
+            let alreadyExists = false
+            if (annotationDedupe) {
+                try {
+                    alreadyExists = await annotationExists({ ...annotationArgs, key: dedupeKey })
+                } catch (error) {
+                    core.warning(`Could not check for an existing annotation, creating anyway: ${error.message}`)
+                }
+            }
+
+            if (alreadyExists) {
+                core.info(`Annotation already exists, skipping: ${dedupeKey}`)
+            } else {
+                await createAnnotation({ ...annotationArgs, content: annotation, scope: annotationScope, hidden: annotationHidden })
+                core.info(`Created PostHog annotation: ${annotation}`)
+            }
         }
 
         if (!eventName) return
