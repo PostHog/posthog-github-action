@@ -13,9 +13,8 @@ inputs:
     required: false
     default: "https://us.i.posthog.com"
   event:
-    description: 'The event name e.g. "GitHubActionCompleted"'
-    required: true
-    default: "event-from-github-actions"
+    description: 'The event name to capture e.g. "GitHubActionCompleted". Optional when only creating an annotation.'
+    required: false
   properties:
     description: "Properties to add to the event - as a JSON string. Must be possible to `JSON.parse(properties)`"
     required: false
@@ -36,6 +35,25 @@ inputs:
   status-job:
     description: "Job name to check for workflow status (e.g., 'Django Tests Pass'). Captures that job's conclusion."
     required: false
+  annotation:
+    description: "Create a PostHog annotation with this text (e.g., 'Deployed to production'). Can be used standalone or alongside event capture."
+    required: false
+  annotation-scope:
+    description: "Annotation scope: 'project' (default) or 'organization'"
+    required: false
+    default: "project"
+  annotation-hidden:
+    description: "If 'true', hide the annotation from the PostHog UI (charts and the annotations list) while keeping it readable via the API and MCP. Use for high-frequency markers like deployments. Defaults to 'false'."
+    required: false
+    default: "false"
+  annotation-api-host:
+    description: "Host for the PostHog app API used to create annotations. This is the app host (e.g. https://us.posthog.com), NOT the event ingestion host in posthog-api-host."
+    required: false
+    default: "https://us.posthog.com"
+  annotation-project-id:
+    description: "Project to create the annotation in. Defaults to '@current' (the project the token belongs to)."
+    required: false
+    default: "@current"
 runs:
   using: "node24"
   main: "dist/index.js"

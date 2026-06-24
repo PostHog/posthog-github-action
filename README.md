@@ -46,9 +46,7 @@ Defaults to `https://us.i.posthog.com`
 
 ### `event`
 
-**Required** The event name to send to PostHog.
-
-Defaults to `event-from-github-actions`
+The event name to send to PostHog (e.g., `"ci-metrics"`). Optional — omit it when you only want to create an annotation. At least one of `event` or `annotation` must be provided.
 
 ### `properties`
 
@@ -77,6 +75,26 @@ Optional runner label to include in properties (e.g., `'depot'`).
 Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `conclusion`.
 
 Note: Your metrics job must `needs` the target job and use `if: always()` to run even on failure.
+
+### `annotation`
+
+Create a PostHog annotation with this text (e.g., `"Deployed to production"`). Can be used standalone or alongside event capture.
+
+### `annotation-scope`
+
+Annotation scope: `'project'` (default) or `'organization'`.
+
+### `annotation-hidden`
+
+Set to `'true'` to hide the annotation from the PostHog UI (charts and the annotations list) while keeping it readable via the API and MCP. Use for high-frequency markers like deployments that would otherwise crowd the UI. Defaults to `'false'`.
+
+### `annotation-api-host`
+
+Host for the PostHog **app** API used to create annotations — e.g. `https://us.posthog.com` (default) or `https://eu.posthog.com`. This is distinct from `posthog-api-host`, which is the event _ingestion_ host (`*.i.posthog.com`); the annotations endpoint lives on the app host.
+
+### `annotation-project-id`
+
+Project to create the annotation in. Defaults to `'@current'` (the project the token belongs to). Set an explicit numeric id for deterministic targeting.
 
 ## Automatically Included Properties
 
@@ -184,6 +202,27 @@ This enables:
     event: "ci-metrics"
     capture-run-duration: true
     github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Create an annotation on deploy
+
+```yaml
+- uses: PostHog/posthog-github-action@v1
+  with:
+    posthog-token: ${{ secrets.POSTHOG_ANNOTATION_API_KEY }}
+    annotation: "Deployed ${{ github.repository }}@${{ github.sha }} to production"
+    annotation-scope: organization
+```
+
+### Hidden deploy marker (readable via API/MCP, hidden from the UI)
+
+```yaml
+- uses: PostHog/posthog-github-action@v1
+  with:
+    posthog-token: ${{ secrets.POSTHOG_ANNOTATION_API_KEY }}
+    annotation: "Deployed to prod-us"
+    annotation-hidden: true
+    annotation-project-id: "2"
 ```
 
 ### Complete Workflow Example

@@ -11,6 +11,35 @@ function classifyActor(actor) {
     return 'human'
 }
 
+async function createAnnotation({ apiHost, projectId, token, content, scope, hidden }) {
+    const body = {
+        content,
+        scope: scope === 'organization' ? 'organization' : 'project',
+        date_marker: new Date().toISOString(),
+        creation_type: 'GIT',
+    }
+    // Omit when not hidden: the API treats a missing value as "not hidden", the safe default.
+    if (hidden) {
+        body.hidden_in_user_interface = true
+    }
+
+    const response = await fetch(`${apiHost}/api/projects/${projectId}/annotations/`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+        const detail = await response.text()
+        throw new Error(`Failed to create annotation: ${response.status} ${detail}`)
+    }
+
+    return response.json()
+}
+
 async function run() {
     try {
         const posthogToken = core.getInput('posthog-token')
@@ -22,6 +51,31 @@ async function run() {
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
         const statusJob = core.getInput('status-job')
+        const annotation = core.getInput('annotation')
+        const annotationScope = core.getInput('annotation-scope')
+        const annotationHidden = core.getInput('annotation-hidden') === 'true'
+        const annotationApiHost = core.getInput('annotation-api-host')
+        const annotationProjectId = core.getInput('annotation-project-id')
+
+        if (!eventName && !annotation) {
+            throw new Error('At least one of `event` or `annotation` is required')
+        }
+
+        // Annotations can be created standalone or alongside event capture. They use
+        // the app API host (annotation-api-host), not the event ingestion host.
+        if (annotation) {
+            await createAnnotation({
+                apiHost: annotationApiHost,
+                projectId: annotationProjectId,
+                token: posthogToken,
+                content: annotation,
+                scope: annotationScope,
+                hidden: annotationHidden,
+            })
+            core.info(`Created PostHog annotation: ${annotation}`)
+        }
+
+        if (!eventName) return
 
         const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
 
