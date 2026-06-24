@@ -11,17 +11,112 @@ function classifyActor(actor) {
     return 'human'
 }
 
+async function annotationExists({ apiHost, projectId, token, key }) {
+    const url = new URL(`${apiHost}/api/projects/${projectId}/annotations/`)
+    url.searchParams.set('search', key)
+
+    const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!response.ok) {
+        const detail = await response.text()
+        throw new Error(`Failed to list annotations: ${response.status} ${detail}`)
+    }
+
+    const data = await response.json()
+    return (data.results || []).some((a) => (a.content || '').startsWith(key))
+}
+
+async function createAnnotation({ apiHost, projectId, token, content, scope, hidden }) {
+    const body = {
+        content,
+        scope: scope === 'organization' ? 'organization' : 'project',
+        date_marker: new Date().toISOString(),
+        creation_type: 'GIT',
+    }
+    // Omit when not hidden: the API treats a missing value as "not hidden", the safe default.
+    if (hidden) {
+        body.hidden_in_user_interface = true
+    }
+
+    const response = await fetch(`${apiHost}/api/projects/${projectId}/annotations/`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+        const detail = await response.text()
+        throw new Error(`Failed to create annotation: ${response.status} ${detail}`)
+    }
+
+    return response.json()
+}
+
 async function run() {
     try {
         const posthogToken = core.getInput('posthog-token')
         const posthogAPIHost = core.getInput('posthog-api-host')
-        const eventName = core.getInput('event')
+        let eventName = core.getInput('event')
         const propertiesInput = core.getInput('properties')
         const captureRunDuration = core.getInput('capture-run-duration') === 'true'
         const captureJobDurations = core.getInput('capture-job-durations') === 'true'
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
         const statusJob = core.getInput('status-job')
+        const annotation = core.getInput('annotation')
+        const annotationScope = core.getInput('annotation-scope')
+        const annotationHidden = core.getInput('annotation-hidden') === 'true'
+        const annotationApiHost = core.getInput('annotation-api-host')
+        const annotationProjectId = core.getInput('annotation-project-id')
+        const annotationDedupe = core.getInput('annotation-dedupe') === 'true'
+        const annotationDedupeKey = core.getInput('annotation-dedupe-key')
+        // Annotations use the app REST API, which needs a personal API key with
+        // annotation:write — distinct from the project key used for event ingestion.
+        // Defaults to posthog-token so annotation-only callers can pass one key.
+        const annotationToken = core.getInput('annotation-token') || posthogToken
+
+        // Preserve the historical default for legacy event-only callers (omitting
+        // `event` used to capture `event-from-github-actions`), while letting an
+        // annotation-only call (annotation set, event omitted) skip event capture.
+        if (!eventName && !annotation) {
+            eventName = 'event-from-github-actions'
+        }
+
+        // Annotations can be created standalone or alongside event capture. They use
+        // the app API host (annotation-api-host), not the event ingestion host.
+        if (annotation) {
+            const annotationArgs = {
+                apiHost: annotationApiHost,
+                projectId: annotationProjectId,
+                token: annotationToken,
+            }
+            // Optional idempotency: skip if a matching annotation already exists, so a
+            // re-run doesn't duplicate it. Match on the dedupe key (a stable prefix) or
+            // the full content. Fail open — a missing marker is worse than a duplicate.
+            const dedupeKey = annotationDedupeKey || annotation
+            let alreadyExists = false
+            if (annotationDedupe) {
+                try {
+                    alreadyExists = await annotationExists({ ...annotationArgs, key: dedupeKey })
+                } catch (error) {
+                    core.warning(`Could not check for an existing annotation, creating anyway: ${error.message}`)
+                }
+            }
+
+            if (alreadyExists) {
+                core.info(`Annotation already exists, skipping: ${dedupeKey}`)
+            } else {
+                await createAnnotation({ ...annotationArgs, content: annotation, scope: annotationScope, hidden: annotationHidden })
+                core.info(`Created PostHog annotation: ${annotation}`)
+            }
+        }
+
+        if (!eventName) return
 
         const properties = propertiesInput ? JSON.parse(propertiesInput) : {}
 
