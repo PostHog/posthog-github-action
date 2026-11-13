@@ -67,6 +67,7 @@ async function run() {
         const captureJobDurations = core.getInput('capture-job-durations') === 'true'
         const githubToken = core.getInput('github-token')
         const runner = core.getInput('runner')
+        const captureActor = core.getInput('capture-actor') !== 'false'
         const statusJob = core.getInput('status-job')
         const annotation = core.getInput('annotation')
         const annotationScope = core.getInput('annotation-scope')
@@ -176,6 +177,9 @@ async function run() {
             actor: github.context.actor,
             actor_type: classifyActor(github.context.actor),
             eventName: github.context.eventName,
+        }
+        if (!captureActor) {
+            delete githubContext.actor
         }
 
         const workflowRunGroup = `${github.context.repo.owner}/${github.context.repo.repo}/${github.context.runId}`

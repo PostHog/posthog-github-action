@@ -70,6 +70,10 @@ GitHub token for API access. Required when `capture-run-duration`, `capture-job-
 
 Optional runner label to include in properties (e.g., `'depot'`).
 
+### `capture-actor`
+
+Set to `'false'` to omit `actor` (the GitHub username that triggered the workflow) from all events, for example to limit the personal data you collect. `actor_type` (`"bot"` or `"human"`) is still captured. Defaults to `'true'`.
+
 ### `status-job`
 
 Job name to check for workflow status. Captures that job's conclusion (`success`, `failure`, `cancelled`) as `conclusion`.
@@ -121,7 +125,7 @@ The following GitHub context properties are automatically added to every event:
 - `runId` - The run ID
 - `repository` - The repository name
 - `repositoryOwner` - The repository owner
-- `actor` - The user who triggered the workflow
+- `actor` - The user who triggered the workflow (omitted when `capture-actor` is `'false'`)
 - `actor_type` - `"bot"` if `actor` ends in `[bot]` or matches a known bot account (currently `Copilot`), otherwise `"human"`. Useful for slicing CI metrics by bot vs. human-driven runs.
 - `eventName` - The event that triggered the workflow
 
