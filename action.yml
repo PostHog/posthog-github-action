@@ -32,6 +32,10 @@ inputs:
   runner:
     description: "Optional runner label to include in properties (e.g., 'depot')"
     required: false
+  capture-actor:
+    description: "If 'false', omit the actor property (the GitHub username that triggered the workflow) from events. actor_type (bot/human) is still captured. Defaults to 'true'."
+    required: false
+    default: "true"
   status-job:
     description: "Job name to check for workflow status (e.g., 'Django Tests Pass'). Captures that job's conclusion."
     required: false
