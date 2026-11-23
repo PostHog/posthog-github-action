@@ -14,7 +14,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: PostHog/posthog-github-action@v1
+      - uses: PostHog/posthog-github-action@v2
         with:
           posthog-token: ${{ secrets.POSTHOG_API_KEY }}
           event: 'ci-metrics'
@@ -24,6 +24,13 @@ jobs:
 ```
 
 This captures run duration, pass/fail status, and GitHub context (repo, branch, commit, actor).
+
+## Upgrading from v1
+
+v2 sends events with posthog-node 6, through PostHog's v1 capture API (`/i/v1/analytics/events`). Inputs and event properties are the same as in v1.
+
+- With the default `posthog-api-host`, change `@v1` to `@v2`. Nothing else changes.
+- With your own `posthog-api-host` (a reverse proxy or a self-hosted instance), make sure it serves `/i/v1/analytics/events` before you switch. `@v1` keeps working as before.
 
 ## Why PostHog for CI Metrics?
 
@@ -43,6 +50,8 @@ This captures run duration, pass/fail status, and GitHub context (repo, branch, 
 Your PostHog API Host.
 
 Defaults to `https://us.i.posthog.com`
+
+The action sends events to `/i/v1/analytics/events` on this host. A reverse proxy or self-hosted instance must serve that path.
 
 ### `event`
 
@@ -175,7 +184,7 @@ This enables:
 ### Custom event with properties
 
 ```yaml
-- uses: PostHog/posthog-github-action@v1
+- uses: PostHog/posthog-github-action@v2
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     event: "deploy-completed"
@@ -185,7 +194,7 @@ This enables:
 ### With run duration
 
 ```yaml
-- uses: PostHog/posthog-github-action@v1
+- uses: PostHog/posthog-github-action@v2
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     event: "ci-metrics"
@@ -196,7 +205,7 @@ This enables:
 ### With per-job metrics
 
 ```yaml
-- uses: PostHog/posthog-github-action@v1
+- uses: PostHog/posthog-github-action@v2
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     event: "ci-metrics"
@@ -209,7 +218,7 @@ This enables:
 ### Using with EU Cloud
 
 ```yaml
-- uses: PostHog/posthog-github-action@v1
+- uses: PostHog/posthog-github-action@v2
   with:
     posthog-token: ${{ secrets.POSTHOG_API_KEY }}
     posthog-api-host: "https://eu.i.posthog.com"
@@ -221,7 +230,7 @@ This enables:
 ### Create an annotation on deploy
 
 ```yaml
-- uses: PostHog/posthog-github-action@v1
+- uses: PostHog/posthog-github-action@v2
   with:
     posthog-token: ${{ secrets.POSTHOG_ANNOTATION_API_KEY }}
     annotation: "Deployed ${{ github.repository }}@${{ github.sha }} to production"
@@ -231,7 +240,7 @@ This enables:
 ### Hidden, idempotent deploy marker (readable via API/MCP, hidden from the UI)
 
 ```yaml
-- uses: PostHog/posthog-github-action@v1
+- uses: PostHog/posthog-github-action@v2
   with:
     posthog-token: ${{ secrets.POSTHOG_ANNOTATION_API_KEY }}
     annotation: "Deployed ${{ github.repository }}@${{ github.sha }} to prod-us"
@@ -264,7 +273,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: PostHog/posthog-github-action@v1
+      - uses: PostHog/posthog-github-action@v2
         with:
           posthog-token: ${{ secrets.POSTHOG_API_KEY }}
           event: "ci-metrics"
@@ -330,7 +339,7 @@ npm run build
 ```bash
 # Update version in package.json manually
 git add package.json dist/
-git commit -m "1.x.x"
+git commit -m "x.y.z"
 # Create PR and merge to main
 ```
 
@@ -338,11 +347,11 @@ git commit -m "1.x.x"
 
 ```bash
 git checkout main && git pull
-git tag v1.x.x
-git push origin v1.x.x
+git tag vX.Y.Z
+git push origin vX.Y.Z
 ```
 
-The release workflow creates the GitHub Release and updates the `v1` tag automatically.
+The release workflow creates the GitHub Release and creates or moves the major version tag (for example `v2` for `v2.1.0`) automatically.
 
 ## License
 
